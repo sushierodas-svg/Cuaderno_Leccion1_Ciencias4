@@ -36,7 +36,7 @@
             transition: transform 0.8s cubic-bezier(0.645, 0.045, 0.355, 1);
         }
 
-        /* Hojas de papel del libro */
+        /* Hojas de papel físicas del libro */
         .paper {
             position: absolute;
             width: 512px;
@@ -46,12 +46,22 @@
             transform-origin: left center;
             -webkit-transform-style: preserve-3d;
             transform-style: preserve-3d;
+            /* Transición fluida y directa de transformación */
             transition: transform 0.8s cubic-bezier(0.645, 0.045, 0.355, 1);
             z-index: 1;
         }
 
-        /* Lado delantero y trasero de cada hoja */
-        .front, .back {
+        /* Rotación de hojas a la izquierda y derecha */
+        .paper.flip-to-left {
+            transform: rotateY(-180deg);
+        }
+
+        .paper.flip-to-right {
+            transform: rotateY(0deg);
+        }
+
+        /* Lado delantero de cada hoja */
+        .front {
             position: absolute;
             width: 100%;
             height: 100%;
@@ -66,22 +76,33 @@
             display: flex;
             flex-direction: column;
             justify-content: space-between;
-        }
-
-        /* El frente se posiciona a 0 grados */
-        .front {
-            transform: rotateY(0deg);
+            transform: rotateY(0deg) translateZ(1px);
             z-index: 2;
         }
 
-        /* El reverso se posiciona girado 180 grados de forma nativa */
+        /* Lado trasero de cada hoja (página izquierda al abrir) */
         .back {
-            transform: rotateY(180deg);
-            z-index: 1;
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            top: 0;
+            left: 0;
+            -webkit-backface-visibility: hidden !important;
+            backface-visibility: hidden !important;
+            /* UN SOLO COLOR SÓLIDO para la página izquierda, súper limpio y sin texturas */
+            background-color: #fffdf9 !important;
+            background-image: none !important;
             box-shadow: inset -3px 0 20px rgba(0,0,0,0.05);
+            padding: 32px;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            transform: rotateY(180deg) translateZ(1px);
+            z-index: 1;
         }
 
-        /* Textura de papel microperforado de un solo color sólido de fondo */
+        /* Textura punteada de papel microperforado (exclusivo para páginas derechas para mayor contraste) */
         .notebook-texture {
             background-color: #fffdf9;
             background-image: radial-gradient(#cbd5e1 1.2px, transparent 1.2px);
@@ -106,17 +127,8 @@
             align-items: center;
             padding: 20px 0;
         }
-        
-        /* Animaciones fluidas que simulan el doblez y curvatura real de las hojas */
-        .paper.flip-to-left {
-            transform: rotateY(-180deg) scale(0.98);
-        }
 
-        .paper.flip-to-right {
-            transform: rotateY(0deg) scale(1);
-        }
-
-        /* Estilo portada con textura de cuero */
+        /* Estilo portada con textura de cuero de Escolaris */
         .cover-texture {
             background-color: #1b3844;
             background-image: radial-gradient(rgba(247, 190, 0, 0.15) 1px, transparent 0);
@@ -167,7 +179,6 @@
 
                 <!-- ANILLAS / ESPIRAL CENTRAL DEL CUADERNO -->
                 <div class="book-spine">
-                    <!-- Anillas físicas tridimensionales distribuidas verticalmente -->
                     <div class="w-6 h-4 bg-gradient-to-r from-slate-400 to-slate-200 rounded-full border border-slate-500 shadow-md -mx-1.5 my-3"></div>
                     <div class="w-6 h-4 bg-gradient-to-r from-slate-400 to-slate-200 rounded-full border border-slate-500 shadow-md -mx-1.5 my-3"></div>
                     <div class="w-6 h-4 bg-gradient-to-r from-slate-400 to-slate-200 rounded-full border border-slate-500 shadow-md -mx-1.5 my-3"></div>
@@ -178,10 +189,10 @@
                     <div class="w-6 h-4 bg-gradient-to-r from-slate-400 to-slate-200 rounded-full border border-slate-500 shadow-md -mx-1.5 my-3"></div>
                 </div>
 
-                <!-- Portada y primera hoja del cuaderno -->
+                <!-- PORTADA DEL CUADERNO CERRADO (Paper 0) -->
                 <div id="paper-0" class="paper" style="z-index: 10;">
                     
-                    <!-- DELANTERA: PORTADA DEL CUADERNO CERRADO -->
+                    <!-- DELANTERA: PORTADA -->
                     <div class="front cover-texture border-4 border-[#f7be00] rounded-r-3xl relative">
                         <div class="absolute inset-4 border border-[#f7be00]/20 rounded-2xl pointer-events-none"></div>
                         
@@ -220,8 +231,8 @@
                         </div>
                     </div>
 
-                    <!-- TRASERA: EL LABORATORIO DE VALERIA (Lado izquierdo del primer spread) -->
-                    <div class="back notebook-texture border-y-4 border-l-4 border-slate-300 rounded-l-3xl">
+                    <!-- TRASERA: EL LABORATORIO DE VALERIA (Página izquierda, fondo de un solo color sólido) -->
+                    <div class="back border-y-4 border-l-4 border-slate-300 rounded-l-3xl">
                         <div class="flex flex-col justify-between h-full">
                             <div class="space-y-4">
                                 <div class="bg-[#244b5a] text-white text-[10px] font-bold px-4 py-1.5 rounded-r-2xl uppercase tracking-wider w-fit -ml-8">
@@ -279,10 +290,10 @@
 
                 </div>
 
-                <!-- Segunda hoja del cuaderno -->
+                <!-- SEGUNDA HOJA DEL CUADERNO (Paper 1) -->
                 <div id="paper-1" class="paper" style="z-index: 9;">
                     
-                    <!-- DELANTERA: LECCIÓN 1: CONCEPTOS (Lado derecho del primer spread) -->
+                    <!-- DELANTERA: LECCIÓN 1: CONCEPTOS -->
                     <div class="front notebook-texture border-y-4 border-r-4 border-slate-300 rounded-r-3xl pr-16">
                         <div class="flex flex-col justify-between h-full">
                             <div class="space-y-4">
@@ -323,8 +334,8 @@
                         </div>
                     </div>
 
-                    <!-- TRASERA: LECCIÓN 2: PRIMEROS SERES (Lado izquierdo del segundo spread) -->
-                    <div class="back notebook-texture border-y-4 border-l-4 border-slate-300 rounded-l-3xl">
+                    <!-- TRASERA: LECCIÓN 2: PRIMEROS SERES (Página izquierda, fondo de un solo color sólido) -->
+                    <div class="back border-y-4 border-l-4 border-slate-300 rounded-l-3xl">
                         <div class="flex flex-col justify-between h-full">
                             <div class="space-y-4">
                                 <span class="text-xs bg-[#244b5a] text-white px-3 py-1 rounded-full uppercase tracking-wider font-bold">Lección 2</span>
@@ -360,10 +371,10 @@
 
                 </div>
 
-                <!-- Tercera hoja del cuaderno -->
+                <!-- TERCERA HOJA DEL CUADERNO (Paper 2) -->
                 <div id="paper-2" class="paper" style="z-index: 8;">
                     
-                    <!-- DELANTERA: LECCIÓN 3: CUALI VS CUANTI (Lado derecho del segundo spread) -->
+                    <!-- DELANTERA: LECCIÓN 3: CUALI VS CUANTI -->
                     <div class="front notebook-texture border-y-4 border-r-4 border-slate-300 rounded-r-3xl pr-16">
                         <div class="flex flex-col justify-between h-full">
                             <div class="space-y-4">
@@ -406,8 +417,8 @@
                         </div>
                     </div>
 
-                    <!-- TRASERA: JUEGO INTERACTIVO (Lado izquierdo del tercer spread) -->
-                    <div class="back notebook-texture border-y-4 border-l-4 border-slate-300 rounded-l-3xl">
+                    <!-- TRASERA: JUEGO INTERACTIVO (Página izquierda, fondo de un solo color sólido) -->
+                    <div class="back border-y-4 border-l-4 border-slate-300 rounded-l-3xl">
                         <div class="flex flex-col justify-between h-full">
                             <div class="space-y-4">
                                 <span class="text-xs bg-[#db6015] text-white px-3 py-1 rounded-full uppercase tracking-wider font-bold">Práctica</span>
@@ -433,11 +444,11 @@
                                 <div class="grid grid-cols-2 gap-4 mt-4">
                                     <button onclick="checkGameAnswer('cualitativo')" class="bg-[#993921] hover:bg-[#7a2a17] text-white font-bold py-3 px-4 rounded-xl shadow-md transition-all active:scale-95 text-xs uppercase flex flex-col items-center">
                                         <span class="text-sm">🎨 Cualitativo</span>
-                                        <span class="text-[9px] font-normal opacity-85">Describe cualidades</span>
+                                        <span class="text-[9px] font-normal opacity-80">Describe cualidades</span>
                                     </button>
                                     <button onclick="checkGameAnswer('cuantitativo')" class="bg-[#244b5a] hover:bg-[#1a3844] text-white font-bold py-3 px-4 rounded-xl shadow-md transition-all active:scale-95 text-xs uppercase flex flex-col items-center">
                                         <span class="text-sm">🔢 Cuantitativo</span>
-                                        <span class="text-[9px] font-normal opacity-85">Usa números</span>
+                                        <span class="text-[9px] font-normal opacity-80">Usa números</span>
                                     </button>
                                 </div>
 
@@ -448,10 +459,10 @@
 
                 </div>
 
-                <!-- Cuarta hoja del cuaderno (Evaluación) -->
+                <!-- CUARTA HOJA DEL CUADERNO (Paper 3) -->
                 <div id="paper-3" class="paper" style="z-index: 7;">
                     
-                    <!-- DELANTERA: EVALUACIÓN TRIVIA CON FEEDBACK FORMATIVO (Lado derecho del tercer spread) -->
+                    <!-- DELANTERA: EVALUACIÓN TRIVIA CON FEEDBACK FORMATIVO -->
                     <div class="front notebook-texture border-y-4 border-r-4 border-slate-300 rounded-r-3xl pr-16">
                         <div class="flex flex-col justify-between h-full overflow-y-auto pr-2">
                             <div class="space-y-4">
@@ -529,7 +540,7 @@
                         </div>
                     </div>
 
-                    <!-- TRASERA: CONTRAPORTADA / FINAL DE TRASCENDENCIA INSTITUCIONAL ESCOLARIS -->
+                    <!-- TRASERA: CONTRAPORTADA / FINAL DE TRASCENDENCIA INSTITUCIONAL ESCOLARIS (Página izquierda, fondo de un solo color sólido) -->
                     <div class="back cover-texture border-4 border-[#f7be00] rounded-l-3xl relative">
                         <div class="absolute inset-4 border border-[#f7be00]/20 rounded-2xl pointer-events-none"></div>
                         <div class="flex flex-col items-center justify-center text-center h-full py-8 px-6 space-y-6 relative z-10">
@@ -616,6 +627,7 @@
         let detectiveName = "Valeria";
         let currentSpread = 0; // 0 = Cerrado (Portada), 1 = Spread 1, 2 = Spread 2, 3 = Spread 3 (Trivia)
         const totalSpreads = 3;
+        let previousSpread = 0;
 
         let objectChecklist = { rock: false, plant: false, drop: false };
         let gameScore = 0;
@@ -708,67 +720,94 @@
 
         // Actualizar visualizaciones y estados de la página
         function updateBookSpreadLayout() {
-            const paper0 = document.getElementById('paper-0');
-            const paper1 = document.getElementById('paper-1');
-            const paper2 = document.getElementById('paper-2');
-            const paper3 = document.getElementById('paper-3');
+            const papers = [
+                document.getElementById('paper-0'),
+                document.getElementById('paper-1'),
+                document.getElementById('paper-2'),
+                document.getElementById('paper-3')
+            ];
 
-            // Resetear clases de animación para forzar reinicio físico
-            [paper0, paper1, paper2, paper3].forEach(p => {
-                p.classList.remove('flip-to-left', 'flip-to-right');
+            // 1. Identificar si hay alguna página cambiando de estado (volteándose) para darle súper prioridad (Z-Index 50)
+            let flippingIndex = -1;
+            if (currentSpread !== previousSpread) {
+                flippingIndex = Math.min(currentSpread, previousSpread);
+            }
+
+            // 2. Aplicar la orientación física de las hojas sin removerlas innecesariamente
+            papers.forEach((paper, index) => {
+                if (index === flippingIndex) {
+                    paper.classList.add('flipping');
+                    // Retirar la súper prioridad de animación al terminar el giro
+                    const onTransitionEnd = () => {
+                        paper.classList.remove('flipping');
+                        paper.removeEventListener('transitionend', onTransitionEnd);
+                    };
+                    paper.addEventListener('transitionend', onTransitionEnd);
+                } else {
+                    paper.classList.remove('flipping');
+                }
+
+                // Colocar la página en la izquierda o la derecha
+                if (index < currentSpread) {
+                    paper.classList.add('flip-to-left');
+                    paper.classList.remove('flip-to-right');
+                } else {
+                    paper.classList.add('flip-to-right');
+                    paper.classList.remove('flip-to-left');
+                }
             });
 
-            // Spread 0: Cerrado (Portada) - El libro se desplaza para centrarse como hoja única
+            // 3. Sistema de apilamiento lógico 3D (Z-Index) basado en el spread de destino
             if (currentSpread === 0) {
                 document.getElementById('page-indicator').textContent = "Cerrado";
                 document.getElementById('btn-prev-page').disabled = true;
                 document.getElementById('btn-next-page').disabled = false;
+
+                papers[0].style.zIndex = "10";
+                papers[1].style.zIndex = "9";
+                papers[2].style.zIndex = "8";
+                papers[3].style.zIndex = "7";
             }
-            // Spread 1: Laboratorio de Valeria (Izquierda) / Conceptos Clave (Derecha)
             else if (currentSpread === 1) {
-                paper0.classList.add('flip-to-left'); // Se va al lomo izquierdo
                 document.getElementById('page-indicator').textContent = "Spread 1 de 3";
                 document.getElementById('btn-prev-page').disabled = false;
                 document.getElementById('btn-next-page').disabled = false;
                 
-                paper0.style.zIndex = "10";
-                paper1.style.zIndex = "9";
-                paper2.style.zIndex = "8";
-                paper3.style.zIndex = "7";
+                papers[0].style.zIndex = "10"; // Cara izquierda visible
+                papers[1].style.zIndex = "9";  // Cara derecha visible
+                papers[2].style.zIndex = "8";
+                papers[3].style.zIndex = "7";
             }
-            // Spread 2: Primeros Seres Vivos (Izquierda) / Cualitativo vs Cuantitativo (Derecha)
             else if (currentSpread === 2) {
-                paper0.classList.add('flip-to-left');
-                paper1.classList.add('flip-to-left'); 
                 document.getElementById('page-indicator').textContent = "Spread 2 de 3";
                 document.getElementById('btn-prev-page').disabled = false;
                 document.getElementById('btn-next-page').disabled = false;
 
-                paper0.style.zIndex = "8";
-                paper1.style.zIndex = "10";
-                paper2.style.zIndex = "9";
-                paper3.style.zIndex = "7";
+                papers[0].style.zIndex = "7";
+                papers[1].style.zIndex = "10"; // Cara izquierda visible (Lección 2)
+                papers[2].style.zIndex = "9";  // Cara derecha visible (Lección 3)
+                papers[3].style.zIndex = "8";
             }
-            // Spread 3: Juego de Clasificar (Izquierda) / Evaluación Final (Derecha)
             else if (currentSpread === 3) {
-                paper0.classList.add('flip-to-left');
-                paper1.classList.add('flip-to-left');
-                paper2.classList.add('flip-to-left');
-
                 document.getElementById('page-indicator').textContent = "Spread 3 de 3";
                 document.getElementById('btn-prev-page').disabled = false;
                 document.getElementById('btn-next-page').disabled = true;
 
-                paper0.style.zIndex = "7";
-                paper1.style.zIndex = "8";
-                paper2.style.zIndex = "10";
-                paper3.style.zIndex = "9";
+                papers[0].style.zIndex = "6";
+                papers[1].style.zIndex = "7";
+                papers[2].style.zIndex = "10"; // Cara izquierda visible (Juego)
+                papers[3].style.zIndex = "9";  // Cara derecha visible (Trivia)
+            }
+
+            // Si hay una página volteándose en este momento, sobreescribimos su z-index para que flote por encima del resto
+            if (flippingIndex !== -1) {
+                papers[flippingIndex].style.zIndex = "50";
             }
 
             // Ejecutar el escalado y centrado automático
             autoScaleBook();
 
-            // Actualizar el estilo activo de los separadores/pestañas
+            // Actualizar el estilo activo de los separadores/pestañas laterales
             for (let i = 0; i < 3; i++) {
                 const tab = document.getElementById(`tab-${i}`);
                 if (tab) {
@@ -786,6 +825,9 @@
                     }
                 }
             }
+
+            // Sincronizar el spread anterior para el cálculo del siguiente giro
+            previousSpread = currentSpread;
         }
 
         function nextSpread() {
@@ -1006,7 +1048,7 @@
             if (!container) return;
             const screenWidth = window.innerWidth;
             
-            // 1. Calcular el factor de escalado para pantallas pequeñas
+            // Calcular el factor de escala proporcional
             let scaleStr = "";
             if (screenWidth < 1100) {
                 const factor = (screenWidth - 32) / 1024;
@@ -1015,7 +1057,7 @@
                 scaleStr = "scale(1)";
             }
             
-            // 2. Centrado Dinámico: si el libro está cerrado (Spread 0), se traslada hacia la izquierda
+            // Centrado Dinámico: si el libro está cerrado (Spread 0), se traslada hacia la izquierda
             // para que la hoja única de la portada quede perfectamente centrada en el visor.
             // Si está abierto, se regresa al centro (translateX(0)).
             let translateStr = currentSpread === 0 ? "translateX(-256px)" : "translateX(0)";
