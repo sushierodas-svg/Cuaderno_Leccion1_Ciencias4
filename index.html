@@ -1,0 +1,1089 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Escolaris - Cuaderno de Investigador: El Origen de la Vida</title>
+    <!-- Tailwind CSS para diseño estructurado -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Fonts con tipografía 'Outfit' que emula la geometría de Futura (limpia, sobria y legible) -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700;800&display=swap" rel="stylesheet">
+    
+    <style>
+        body {
+            font-family: 'Outfit', sans-serif;
+            background-color: #f0f4f8;
+            overflow-x: hidden;
+        }
+
+        /* VISOR REDISEÑADO: Optimizado para evitar cualquier scrollbar o corte en Canvas */
+        .book-viewport {
+            perspective: 2500px;
+            position: relative;
+            width: 100%;
+            height: 680px;
+            overflow: hidden;
+        }
+
+        /* CONTENEDOR DEL LIBRO CON DIMENSIONES BLINDADAS */
+        .book-container {
+            width: 1024px !important;
+            min-width: 1024px !important;
+            max-width: 1024px !important;
+            height: 650px !important;
+            min-height: 650px !important;
+            max-height: 650px !important;
+            position: absolute;
+            top: 0;
+            left: 0;
+            -webkit-transform-style: preserve-3d;
+            transform-style: preserve-3d;
+            transition: transform 0.8s cubic-bezier(0.645, 0.045, 0.355, 1);
+            transform-origin: left top; /* Permite escalar y centrar matemáticamente desde la esquina superior izquierda */
+        }
+
+        /* Hojas de papel físicas en 3D */
+        .paper {
+            position: absolute;
+            width: 512px;
+            height: 100%;
+            top: 0;
+            right: 0;
+            transform-origin: left center;
+            -webkit-transform-style: preserve-3d;
+            transform-style: preserve-3d;
+            transition: transform 0.8s cubic-bezier(0.645, 0.045, 0.355, 1);
+            z-index: 1;
+        }
+
+        /* Lado delantero y trasero de cada hoja */
+        .front, .back {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            top: 0;
+            left: 0;
+            -webkit-backface-visibility: hidden !important;
+            backface-visibility: hidden !important;
+            background-color: #fffdf9;
+            box-shadow: inset 3px 0 20px rgba(0,0,0,0.05);
+            padding: 28px 32px 20px 32px;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+        }
+
+        .front {
+            transform: rotateY(0deg) translateZ(1px); /* Previene conflictos de profundidad */
+            z-index: 2;
+        }
+
+        /* PÁGINAS IZQUIERDAS: Un solo fondo sólido, limpio y opaco que bloquea cualquier texto espejo */
+        .back {
+            background-color: #fffdf9 !important;
+            background-image: none !important;
+            box-shadow: inset -3px 0 20px rgba(0,0,0,0.05);
+            transform: rotateY(180deg) translateZ(1px);
+            z-index: 1;
+        }
+
+        /* Transición de volteado directo para prevenir conflictos con keyframes en Safari */
+        .paper.flip-to-left {
+            transform: rotateY(-180deg);
+        }
+
+        .paper.flip-to-right {
+            transform: rotateY(0deg);
+        }
+
+        /* Textura punteada opcional para páginas derechas */
+        .notebook-texture {
+            background-color: #fffdf9;
+            background-image: radial-gradient(#cbd5e1 1.2px, transparent 1.2px);
+            background-size: 24px 24px;
+        }
+
+        /* Espiral o anillas centrales */
+        .book-spine {
+            position: absolute;
+            left: 512px;
+            top: 0;
+            width: 24px;
+            height: 100%;
+            background: linear-gradient(to right, #1b3844 0%, #244b5a 50%, #1b3844 100%);
+            transform: translateX(-50%);
+            z-index: 100;
+            border-radius: 4px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.3);
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            align-items: center;
+            padding: 20px 0;
+        }
+
+        /* Textura exterior de la portada de cuero de Escolaris */
+        .cover-texture {
+            background-color: #1b3844;
+            background-image: radial-gradient(rgba(247, 190, 0, 0.15) 1px, transparent 0);
+            background-size: 16px 16px;
+        }
+    </style>
+</head>
+<body class="min-h-screen text-[#244b5a] flex flex-col justify-between">
+
+    <!-- CABECERA INSTITUCIONAL: ESCOLARIS -->
+    <header class="bg-[#244b5a] text-white py-4 px-6 shadow-xl relative overflow-hidden border-b-4 border-[#f7be00]">
+        <!-- Avión de papel decorativo -->
+        <div class="absolute right-12 top-2 opacity-15 w-24 h-24 pointer-events-none transform rotate-12">
+            <svg viewBox="0 0 100 100" class="w-full h-full">
+                <polygon points="50,10 15,75 50,65" fill="#f7be00" />
+                <polygon points="50,10 85,75 50,65" fill="#f7be00" />
+                <polygon points="50,10 50,65 42,75" fill="#db6015" />
+                <polygon points="50,10 50,65 58,75" fill="#993921" />
+            </svg>
+        </div>
+
+        <div class="max-w-6xl mx-auto flex flex-col items-center justify-center text-center relative z-10">
+            <!-- Isotipo Escolaris -->
+            <div class="mb-1 transform hover:scale-105 transition-transform duration-300">
+                <svg viewBox="0 0 100 100" class="w-12 h-12">
+                    <polygon points="50,10 15,75 50,65" fill="#f7be00" />
+                    <polygon points="50,10 85,75 50,65" fill="#f7be00" opacity="0.9" />
+                    <polygon points="50,10 50,65 40,76" fill="#db6015" />
+                    <polygon points="50,10 50,65 60,76" fill="#993921" />
+                </svg>
+            </div>
+
+            <div class="flex items-center gap-1 justify-center">
+                <span class="text-xl md:text-2xl font-extrabold tracking-wider uppercase text-white">ESCOL</span>
+                <span class="text-xl md:text-2xl font-extrabold tracking-wider uppercase text-[#f7be00]">ARIS</span>
+            </div>
+            <p class="text-[#f7be00] text-[9px] font-bold tracking-widest uppercase">
+                Educación para trascender
+            </p>
+        </div>
+    </header>
+
+    <!-- VISTA PRINCIPAL DEL CUADERNO -->
+    <main class="flex-grow flex items-center justify-center p-4">
+        
+        <div class="book-viewport">
+            <div id="book-container" class="book-container">
+
+                <!-- ANILLAS / ESPIRAL CENTRAL -->
+                <div class="book-spine">
+                    <div class="w-6 h-4 bg-gradient-to-r from-slate-400 to-slate-200 rounded-full border border-slate-500 shadow-md -mx-1.5 my-3"></div>
+                    <div class="w-6 h-4 bg-gradient-to-r from-slate-400 to-slate-200 rounded-full border border-slate-500 shadow-md -mx-1.5 my-3"></div>
+                    <div class="w-6 h-4 bg-gradient-to-r from-slate-400 to-slate-200 rounded-full border border-slate-500 shadow-md -mx-1.5 my-3"></div>
+                    <div class="w-6 h-4 bg-gradient-to-r from-slate-400 to-slate-200 rounded-full border border-slate-500 shadow-md -mx-1.5 my-3"></div>
+                    <div class="w-6 h-4 bg-gradient-to-r from-slate-400 to-slate-200 rounded-full border border-slate-500 shadow-md -mx-1.5 my-3"></div>
+                    <div class="w-6 h-4 bg-gradient-to-r from-slate-400 to-slate-200 rounded-full border border-slate-500 shadow-md -mx-1.5 my-3"></div>
+                    <div class="w-6 h-4 bg-gradient-to-r from-slate-400 to-slate-200 rounded-full border border-slate-500 shadow-md -mx-1.5 my-3"></div>
+                    <div class="w-6 h-4 bg-gradient-to-r from-slate-400 to-slate-200 rounded-full border border-slate-500 shadow-md -mx-1.5 my-3"></div>
+                </div>
+
+                <!-- PORTADA Y PRIMERA HOJA (Paper 0) -->
+                <div id="paper-0" class="paper" style="z-index: 10;">
+                    
+                    <!-- DELANTERA: PORTADA DEL CUADERNO -->
+                    <div class="front cover-texture border-4 border-[#f7be00] rounded-r-3xl relative">
+                        <div class="absolute inset-4 border border-[#f7be00]/20 rounded-2xl pointer-events-none"></div>
+                        
+                        <div class="flex flex-col items-center justify-between h-full py-8 text-center relative z-10">
+                            <div class="transform rotate-6 scale-110">
+                                <svg viewBox="0 0 100 100" class="w-20 h-20 drop-shadow-xl">
+                                    <polygon points="50,10 15,75 50,65" fill="#f7be00" />
+                                    <polygon points="50,10 85,75 50,65" fill="#f7be00" opacity="0.9" />
+                                    <polygon points="50,10 50,65 40,76" fill="#db6015" />
+                                    <polygon points="50,10 50,65 60,76" fill="#993921" />
+                                </svg>
+                            </div>
+
+                            <div class="space-y-2">
+                                <span class="bg-[#244b5a] text-[#f7be00] text-xs font-bold px-3 py-1 rounded-full uppercase tracking-wider">
+                                    🔬 Cuaderno de Ciencias Naturales
+                                </span>
+                                <h1 class="text-2xl font-extrabold text-white leading-tight uppercase">
+                                    El Origen<br><span class="text-[#f7be00]">de la Vida</span>
+                                </h1>
+                            </div>
+
+                            <!-- Input interactivo para registrar el nombre del alumno -->
+                            <div class="bg-[#fffdf9] p-4 rounded-2xl border-4 border-dashed border-[#db6015] w-full max-w-sm shadow-inner">
+                                <label class="block text-slate-500 text-[10px] font-bold uppercase tracking-wider mb-1">
+                                    Nombre de Investigador:
+                                </label>
+                                <input type="text" id="detective-input-name" placeholder="Escribe tu nombre..." value="Valeria"
+                                       class="w-full text-center py-2 px-3 bg-slate-50 rounded-xl text-base font-bold text-[#244b5a] border-2 border-slate-300 focus:border-[#f7be00] outline-none transition-all">
+                            </div>
+
+                            <button onclick="openNotebook()" 
+                                    class="bg-[#f7be00] hover:bg-[#db6015] text-[#244b5a] hover:text-white font-extrabold text-xs px-8 py-3 rounded-full uppercase tracking-wider shadow-lg transform hover:scale-105 transition-all">
+                                📖 Abrir Cuaderno Científico
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- TRASERA: LABORATORIO DE CAMPO (Izquierda Spread 1) -->
+                    <div class="back border-y-4 border-l-4 border-slate-300 rounded-l-3xl">
+                        <div class="flex flex-col justify-between h-full">
+                            <div class="space-y-3">
+                                <div class="bg-[#244b5a] text-white text-[9px] font-bold px-4 py-1 rounded-r-2xl uppercase tracking-wider w-fit -ml-8">
+                                    🔬 Laboratorio de Campo
+                                </div>
+                                <h3 class="text-xl font-extrabold text-[#244b5a] mt-1">
+                                    🕵️‍♀️ <span id="user-name-title">El Cuaderno de Valeria</span>
+                                </h3>
+                                <p class="text-slate-600 text-xs leading-relaxed">
+                                    Inspecciona los tres elementos haciendo clic sobre ellos:
+                                </p>
+
+                                <!-- Selección interactiva -->
+                                <div class="grid grid-cols-3 gap-2 mt-2">
+                                    <button onclick="showObjectInfo('rock')" class="flex flex-col items-center p-2 bg-white hover:bg-[#f7be00]/10 rounded-xl border-2 border-slate-200 hover:border-[#f7be00] shadow-sm transition-all group">
+                                        <span class="text-2xl group-hover:scale-110 transition-transform">🪨</span>
+                                        <span class="text-[10px] font-bold text-[#244b5a] mt-1">Roca Antigua</span>
+                                    </button>
+                                    <button onclick="showObjectInfo('plant')" class="flex flex-col items-center p-2 bg-white hover:bg-[#db6015]/10 rounded-xl border-2 border-slate-200 hover:border-[#db6015] shadow-sm transition-all group">
+                                        <span class="text-2xl group-hover:scale-110 transition-transform">🌱</span>
+                                        <span class="text-[10px] font-bold text-[#244b5a] mt-1">Planta Viva</span>
+                                    </button>
+                                    <button onclick="showObjectInfo('drop')" class="flex flex-col items-center p-2 bg-white hover:bg-[#244b5a]/10 rounded-xl border-2 border-slate-200 hover:border-[#244b5a] shadow-sm transition-all group">
+                                        <span class="text-2xl group-hover:scale-110 transition-transform">💧</span>
+                                        <span class="text-[10px] font-bold text-[#244b5a] mt-1">Gota de Agua</span>
+                                    </button>
+                                </div>
+
+                                <div id="object-display-panel" class="p-3 bg-amber-50/50 rounded-xl border-2 border-dashed border-[#f7be00]/50 text-xs text-slate-500 min-h-[90px] flex items-center justify-center text-center">
+                                    <p class="italic">👉 Haz clic en un objeto para investigarlo con la lupa.</p>
+                                </div>
+                            </div>
+
+                            <!-- Progreso integrado -->
+                            <div class="border-t border-slate-200 pt-3">
+                                <h4 class="text-[10px] font-bold text-[#244b5a] uppercase tracking-wider mb-1">📋 Progreso:</h4>
+                                <div class="space-y-1 text-[11px]">
+                                    <div class="flex items-center gap-1.5">
+                                        <span id="prog-obs" class="text-slate-300">⚪</span>
+                                        <span class="text-slate-500">Analizar las 3 muestras científicas.</span>
+                                    </div>
+                                    <div class="flex items-center gap-1.5">
+                                        <span id="prog-game" class="text-slate-300">⚪</span>
+                                        <span class="text-slate-500">Completar el clasificador interactivo.</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- BOTÓN DE NAVEGACIÓN INTEGRADO DENTRO DE LA PÁGINA (NUNCA SE CORTA) -->
+                            <div class="flex justify-between items-center pt-2 mt-auto border-t border-slate-100 text-xs">
+                                <button onclick="goToSpread(0)" class="flex items-center gap-1 px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-[#244b5a] font-bold rounded-lg transition-all">
+                                    ⬅️ Cerrar Cuaderno
+                                </button>
+                                <span class="text-slate-400 font-bold tracking-wider">Pág. 1</span>
+                                <div class="w-[80px]"></div>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+
+                <!-- SEGUNDA HOJA DEL CUADERNO (Paper 1) -->
+                <div id="paper-1" class="paper" style="z-index: 9;">
+                    
+                    <!-- DELANTERA: LECCIÓN 1: CONCEPTOS (Derecha Spread 1) -->
+                    <div class="front notebook-texture border-y-4 border-r-4 border-slate-300 rounded-r-3xl pr-16">
+                        <div class="flex flex-col justify-between h-full">
+                            <div class="space-y-3">
+                                <span class="text-[10px] bg-[#db6015] text-white px-3 py-0.5 rounded-full uppercase tracking-wider font-bold">Lección 1</span>
+                                <h3 class="text-xl font-extrabold text-[#244b5a] leading-tight">Las dos formas de explicar el origen</h3>
+                                <p class="text-slate-600 text-xs leading-relaxed">
+                                    Para comprender el origen de la vida, los seres humanos utilizamos dos caminos bien definidos:
+                                </p>
+
+                                <div class="grid grid-cols-1 gap-2.5">
+                                    <div class="bg-white p-3 rounded-xl border border-[#db6015]/30">
+                                        <h4 class="font-extrabold text-[#db6015] text-xs uppercase tracking-wider flex items-center gap-1.5">🌍 Explicación Cultural</h4>
+                                        <p class="text-[11px] text-slate-500 mt-1 leading-relaxed">
+                                            Son leyendas y mitos hermosos creados por diferentes pueblos del mundo para dar sentido a la existencia basándose en su fe y tradiciones ancestrales.
+                                        </p>
+                                    </div>
+
+                                    <div class="bg-white p-3 rounded-xl border border-[#244b5a]/30">
+                                        <h4 class="font-extrabold text-[#244b5a] text-xs uppercase tracking-wider flex items-center gap-1.5">🧪 Teoría Científica</h4>
+                                        <p class="text-[11px] text-slate-500 mt-1 leading-relaxed">
+                                            Modelos de pensamiento que construyen los científicos uniendo pruebas físicas llamadas <strong>evidencias</strong> que se pueden medir y repetir en cualquier laboratorio.
+                                        </p>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="bg-[#f7be00]/10 border-l-4 border-[#f7be00] p-2.5 rounded-r-xl text-[11px] leading-relaxed">
+                                <strong class="text-[#244b5a]">🔑 Evidencia:</strong> Es un dato real que apoya o descarta una hipótesis científica. ¡La ciencia exige pruebas que todos puedan comprobar!
+                            </div>
+
+                            <!-- BOTÓN DE NAVEGACIÓN INTEGRADO DENTRO DE LA PÁGINA -->
+                            <div class="flex justify-between items-center pt-2 mt-auto border-t border-slate-100 text-xs">
+                                <div class="w-[80px]"></div>
+                                <span class="text-slate-400 font-bold tracking-wider">Pág. 2</span>
+                                <button onclick="nextSpread()" class="flex items-center gap-1 px-3 py-1.5 bg-[#f7be00] hover:bg-[#db6015] hover:text-white text-[#244b5a] font-bold rounded-lg transition-all shadow-sm">
+                                    Siguiente Página ➡️
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- TRASERA: LECCIÓN 2: PRIMEROS SERES (Izquierda Spread 2) -->
+                    <div class="back border-y-4 border-l-4 border-slate-300 rounded-l-3xl">
+                        <div class="flex flex-col justify-between h-full">
+                            <div class="space-y-3">
+                                <span class="text-[10px] bg-[#244b5a] text-white px-3 py-0.5 rounded-full uppercase tracking-wider font-bold">Lección 2</span>
+                                <h3 class="text-xl font-extrabold text-[#244b5a]">🦠 Los Primeros Seres Vivos</h3>
+                                <p class="text-slate-600 text-xs leading-relaxed">
+                                    Hace 3,500 millones de años, la Tierra primitiva era un mundo extremadamente hostil. Los primeros pobladores del planeta fueron:
+                                </p>
+
+                                <div class="space-y-2">
+                                    <div class="bg-white p-3 rounded-xl border-l-4 border-[#244b5a] shadow-sm flex items-start gap-3">
+                                        <span class="text-2xl mt-0.5">🧫</span>
+                                        <div>
+                                            <h4 class="font-bold text-[#244b5a] text-xs">Microorganismos Unicelulares</h4>
+                                            <p class="text-[10px] text-slate-500 mt-0.5">Bacterias sencillas que dominaron los océanos primigenios y sentaron las bases biológicas.</p>
+                                        </div>
+                                    </div>
+
+                                    <div class="bg-white p-3 rounded-xl border-l-4 border-[#f7be00] shadow-sm flex items-start gap-3">
+                                        <span class="text-2xl mt-0.5">🪨</span>
+                                        <div>
+                                            <h4 class="font-bold text-[#244b5a] text-xs">Estromatolitos Fósiles</h4>
+                                            <p class="text-[10px] text-slate-500 mt-0.5">Estructuras minerales formadas por antiguas comunidades microbianas que llenaron el aire de oxígeno.</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="p-3 bg-[#f7be00]/10 rounded-xl border border-[#f7be00] text-xs text-[#244b5a] font-semibold text-center">
+                                💡 ¡La roca antigua de Valeria contiene restos reales de estas bacterias antiguas!
+                            </div>
+
+                            <!-- BOTÓN DE NAVEGACIÓN INTEGRADO DENTRO DE LA PÁGINA -->
+                            <div class="flex justify-between items-center pt-2 mt-auto border-t border-slate-100 text-xs">
+                                <button onclick="prevSpread()" class="flex items-center gap-1 px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-[#244b5a] font-bold rounded-lg transition-all">
+                                    ⬅️ Página Anterior
+                                </button>
+                                <span class="text-slate-400 font-bold tracking-wider">Pág. 3</span>
+                                <div class="w-[80px]"></div>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+
+                <!-- TERCERA HOJA DEL CUADERNO (Paper 2) -->
+                <div id="paper-2" class="paper" style="z-index: 8;">
+                    
+                    <!-- DELANTERA: LECCIÓN 3: CUALI VS CUANTI (Derecha Spread 2) -->
+                    <div class="front notebook-texture border-y-4 border-r-4 border-slate-300 rounded-r-3xl pr-16">
+                        <div class="flex flex-col justify-between h-full">
+                            <div class="space-y-3">
+                                <span class="text-[10px] bg-[#993921] text-white px-3 py-0.5 rounded-full uppercase tracking-wider font-bold">Lección 3</span>
+                                <h3 class="text-xl font-extrabold text-[#244b5a]">🔬 El Ojo de la Ciencia</h3>
+                                <p class="text-slate-600 text-xs leading-relaxed">
+                                    Para clasificar las evidencias en nuestro cuaderno de campo con total veracidad, los sabios usamos dos métodos de observación:
+                                </p>
+
+                                <div class="grid grid-cols-1 gap-3">
+                                    <div class="bg-white p-3 rounded-xl border border-[#993921]/30">
+                                        <h4 class="font-extrabold text-[#993921] text-xs uppercase tracking-wider flex items-center gap-1.5">🎨 Cualitativo</h4>
+                                        <p class="text-[11px] text-slate-500 mt-1">
+                                            Describe cualidades físicas observables directamente a través de nuestros sentidos (como texturas, olores, colores o formas sutiles).
+                                        </p>
+                                    </div>
+
+                                    <div class="bg-white p-3 rounded-xl border border-[#244b5a]/30">
+                                        <h4 class="font-extrabold text-[#244b5a] text-xs uppercase tracking-wider flex items-center gap-1.5">🔢 Cuantitativo</h4>
+                                        <p class="text-[11px] text-slate-500 mt-1">
+                                            Se enfoca en datos exactos, cantidades medibles o conteos representados con números enteros o decimales.
+                                        </p>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- BOTÓN DE NAVEGACIÓN INTEGRADO DENTRO DE LA PÁGINA -->
+                            <div class="flex justify-between items-center pt-2 mt-auto border-t border-slate-100 text-xs">
+                                <div class="w-[80px]"></div>
+                                <span class="text-slate-400 font-bold tracking-wider">Pág. 4</span>
+                                <button onclick="nextSpread()" class="flex items-center gap-1 px-3 py-1.5 bg-[#f7be00] hover:bg-[#db6015] hover:text-white text-[#244b5a] font-bold rounded-lg transition-all shadow-sm">
+                                    Ir a Práctica ➡️
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- TRASERA: MINIJUEGO CLASIFICADOR (Izquierda Spread 3) -->
+                    <div class="back border-y-4 border-l-4 border-slate-300 rounded-l-3xl">
+                        <div class="flex flex-col justify-between h-full">
+                            <div class="space-y-3">
+                                <span class="text-[10px] bg-[#db6015] text-white px-3 py-0.5 rounded-full uppercase tracking-wider font-bold">Práctica</span>
+                                <div class="flex items-center justify-between">
+                                    <h3 class="text-lg font-extrabold text-[#244b5a]">🎮 Clasificador de Evidencias</h3>
+                                    <div class="bg-[#244b5a] text-white text-[11px] font-bold px-3 py-1 rounded-full">
+                                        Puntos: <span id="game-score" class="text-[#f7be00] font-extrabold">0</span>/6
+                                    </div>
+                                </div>
+                                <p class="text-slate-500 text-[11px]">Clasifica cada observación registrada en el laboratorio de Valeria:</p>
+
+                                <!-- Tarjeta del juego interactivo -->
+                                <div id="game-card" class="bg-white p-5 rounded-2xl border-2 border-slate-100 text-center transition-all duration-300">
+                                    <span id="game-item-emoji" class="text-4xl block">🪨</span>
+                                    <p id="game-item-text" class="text-xs font-bold text-[#244b5a] mt-2 leading-relaxed">
+                                        "La roca de estromatolito tiene color marrón rojizo."
+                                    </p>
+                                </div>
+
+                                <!-- Botones de elección del juego -->
+                                <div class="grid grid-cols-2 gap-3 mt-1">
+                                    <button onclick="checkGameAnswer('cualitativo')" class="bg-[#993921] hover:bg-[#7a2a17] text-white font-bold py-2 px-3 rounded-xl text-xs uppercase flex flex-col items-center">
+                                        <span>🎨 Cualitativo</span>
+                                        <span class="text-[8px] font-normal opacity-80">Propiedades</span>
+                                    </button>
+                                    <button onclick="checkGameAnswer('cuantitativo')" class="bg-[#244b5a] hover:bg-[#1a3844] text-white font-bold py-2 px-3 rounded-xl text-xs uppercase flex flex-col items-center">
+                                        <span>🔢 Cuantitativo</span>
+                                        <span class="text-[8px] font-normal opacity-80">Mediciones</span>
+                                    </button>
+                                </div>
+
+                                <div id="game-feedback" class="text-center text-xs font-bold min-h-[16px]"></div>
+                            </div>
+
+                            <!-- BOTÓN DE NAVEGACIÓN INTEGRADO DENTRO DE LA PÁGINA -->
+                            <div class="flex justify-between items-center pt-2 mt-auto border-t border-slate-100 text-xs">
+                                <button onclick="prevSpread()" class="flex items-center gap-1 px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-[#244b5a] font-bold rounded-lg transition-all">
+                                    ⬅️ Página Anterior
+                                </button>
+                                <span class="text-slate-400 font-bold tracking-wider">Pág. 5</span>
+                                <div class="w-[80px]"></div>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+
+                <!-- CUARTA HOJA DEL CUADERNO (Paper 3) -->
+                <div id="paper-3" class="paper" style="z-index: 7;">
+                    
+                    <!-- DELANTERA: EVALUACIÓN / TRIVIA (Derecha Spread 3) -->
+                    <div class="front notebook-texture border-y-4 border-r-4 border-slate-300 rounded-r-3xl pr-16">
+                        <div class="flex flex-col justify-between h-full overflow-y-auto pr-2">
+                            <div class="space-y-3">
+                                <span class="text-[10px] bg-[#f7be00] text-[#244b5a] px-3 py-0.5 rounded-full uppercase tracking-wider font-bold">Evaluación</span>
+                                <h3 class="text-lg font-extrabold text-[#244b5a]">🥇 Certificado de Bio-Detective</h3>
+                                <p class="text-slate-500 text-[10px]">Demuestra tu veracidad científica, <strong class="text-[#db6015]" id="trivia-student-name">Valeria</strong>:</p>
+
+                                <div class="space-y-3 text-[11px]">
+                                    <!-- Q1 -->
+                                    <div id="card-q1" class="bg-white p-2.5 rounded-xl border border-slate-200">
+                                        <p class="font-bold text-[#244b5a]">1. ¿Qué es un relato de origen creado por culturas?</p>
+                                        <div class="flex flex-col gap-1 mt-1.5">
+                                            <label class="flex items-center gap-2 p-1.5 bg-slate-50 hover:bg-slate-100 rounded-lg cursor-pointer">
+                                                <input type="radio" name="q1" value="incorrecta" class="accent-[#244b5a]">
+                                                <span>Teoría científica comprobada</span>
+                                            </label>
+                                            <label class="flex items-center gap-2 p-1.5 bg-slate-50 hover:bg-slate-100 rounded-lg cursor-pointer">
+                                                <input type="radio" name="q1" value="correcta" class="accent-[#244b5a]">
+                                                <span>Explicación cultural o mítica</span>
+                                            </label>
+                                        </div>
+                                        <div id="feedback-q1" class="hidden mt-1.5 p-2 rounded-lg text-[9px] font-semibold"></div>
+                                    </div>
+
+                                    <!-- Q2 -->
+                                    <div id="card-q2" class="bg-white p-2.5 rounded-xl border border-slate-200">
+                                        <p class="font-bold text-[#244b5a]">2. \"Vemos 5 microorganismos.\" ¿A qué observación pertenece?</p>
+                                        <div class="flex flex-col gap-1 mt-1.5">
+                                            <label class="flex items-center gap-2 p-1.5 bg-slate-50 hover:bg-slate-100 rounded-lg cursor-pointer">
+                                                <input type="radio" name="q2" value="correcta" class="accent-[#244b5a]">
+                                                <span>Cuantitativa (número de datos)</span>
+                                            </label>
+                                            <label class="flex items-center gap-2 p-1.5 bg-slate-50 hover:bg-slate-100 rounded-lg cursor-pointer">
+                                                <input type="radio" name="q2" value="incorrecta" class="accent-[#244b5a]">
+                                                <span>Cualitativa (cualidad visual)</span>
+                                            </label>
+                                        </div>
+                                        <div id="feedback-q2" class="hidden mt-1.5 p-2 rounded-lg text-[9px] font-semibold"></div>
+                                    </div>
+
+                                    <!-- Q3 -->
+                                    <div id="card-q3" class="bg-white p-2.5 rounded-xl border border-slate-200">
+                                        <p class="font-bold text-[#244b5a]">3. ¿Cuáles fueron las primeras evidencias de vida?</p>
+                                        <div class="flex flex-col gap-1 mt-1.5">
+                                            <label class="flex items-center gap-2 p-1.5 bg-slate-50 hover:bg-slate-100 rounded-lg cursor-pointer">
+                                                <input type="radio" name="q3" value="correcta" class="accent-[#244b5a]">
+                                                <span>Microbios invisibles y estromatolitos</span>
+                                            </label>
+                                            <label class="flex items-center gap-2 p-1.5 bg-slate-50 hover:bg-slate-100 rounded-lg cursor-pointer">
+                                                <input type="radio" name="q3" value="incorrecta" class="accent-[#244b5a]">
+                                                <span>Plantas terrestres y peces antiguos</span>
+                                            </label>
+                                        </div>
+                                        <div id="feedback-q3" class="hidden mt-1.5 p-2 rounded-lg text-[9px] font-semibold"></div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="mt-3 flex items-center justify-between gap-3 border-t border-slate-100 pt-2">
+                                <button onclick="validateTrivia()" class="bg-[#db6015] hover:bg-[#b84e0f] text-white font-extrabold px-4 py-2 rounded-xl text-xs uppercase shadow-sm">
+                                    🎖️ Validar Registro
+                                </button>
+                                
+                                <div id="trivia-badge-display" class="hidden items-center gap-1.5 bg-[#f7be00]/10 p-1.5 rounded-lg border border-[#f7be00]">
+                                    <span class="text-lg">🥇</span>
+                                    <div class="text-left leading-none">
+                                        <p class="text-[8px] font-bold text-slate-800 uppercase">Sabio</p>
+                                    </div>
+                                </div>
+
+                                <button onclick="nextSpread()" class="flex items-center gap-1 px-3 py-1.5 bg-[#f7be00] hover:bg-[#db6015] hover:text-white text-[#244b5a] font-bold rounded-lg transition-all shadow-sm">
+                                    Finalizar Misión ➡️
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- TRASERA: CONTRAPORTADA FINAL DE MARCA ESCOLARIS (Spread 4 Cerrado) -->
+                    <div class="back cover-texture border-4 border-[#f7be00] rounded-l-3xl relative">
+                        <div class="absolute inset-4 border border-[#f7be00]/20 rounded-2xl pointer-events-none"></div>
+                        <div class="flex flex-col items-center justify-center text-center h-full py-8 px-6 space-y-6 relative z-10">
+                            <div>
+                                <svg viewBox="0 0 100 100" class="w-16 h-16 mx-auto drop-shadow-xl">
+                                    <polygon points="50,10 15,75 50,65" fill="#f7be00" />
+                                    <polygon points="50,10 85,75 50,65" fill="#f7be00" opacity="0.9" />
+                                    <polygon points="50,10 50,65 40,76" fill="#db6015" />
+                                    <polygon points="50,10 50,65 60,76" fill="#993921" />
+                                </svg>
+                            </div>
+
+                            <div class="space-y-2">
+                                <h3 class="text-xl font-extrabold text-white uppercase tracking-wider">¡Misión Cumplida!</h3>
+                                <p class="text-[#f7be00] text-xs font-bold tracking-widest uppercase">ESCOLARIS</p>
+                            </div>
+
+                            <p class="text-slate-200 text-xs leading-relaxed max-w-sm">
+                                Has demostrado poseer las virtudes de veracidad y rigor científico del arquetipo del **Sabio**. A través de evidencias físicas, observaciones lógicas e investigación, has descubierto los fascinantes secretos de la vida. ¡Felicitaciones!
+                            </p>
+
+                            <!-- BOTÓN DE RETORNO INTEGRADO -->
+                            <button onclick="prevSpread()" class="flex items-center gap-1 px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-[#244b5a] font-bold rounded-lg transition-all text-xs">
+                                ⬅️ Volver a Trivia
+                            </button>
+
+                            <p class="text-[#f7be00] text-[9px] font-bold tracking-widest uppercase">
+                                Educación para trascender
+                            </p>
+                        </div>
+                    </div>
+
+                </div>
+
+                <!-- Pestañas de carpeta laterales -->
+                <div class="absolute right-[-44px] top-6 flex flex-col gap-5 z-40">
+                    <button onclick="goToSpread(1)" id="tab-0" class="px-3 py-1.5 text-[10px] font-bold rounded-r-lg bg-slate-200 text-[#244b5a] shadow-md hover:translate-x-1.5 transition-all uppercase tracking-wider rotate-90 origin-left mt-4">
+                        Conceptos
+                    </button>
+                    <button onclick="goToSpread(2)" id="tab-1" class="px-3 py-1.5 text-[10px] font-bold rounded-r-lg bg-slate-200 text-[#244b5a] shadow-md hover:translate-x-1.5 transition-all uppercase tracking-wider rotate-90 origin-left mt-10">
+                        Seres
+                    </button>
+                    <button onclick="goToSpread(3)" id="tab-2" class="px-3 py-1.5 text-[10px] font-bold rounded-r-lg bg-slate-200 text-[#244b5a] shadow-md hover:translate-x-1.5 transition-all uppercase tracking-wider rotate-90 origin-left mt-10">
+                        Evaluación
+                    </button>
+                </div>
+
+                <!-- INDICADOR INVISIBLE PARA CUMPLIMIENTO DEL MOTOR -->
+                <span id="page-indicator" class="hidden"></span>
+
+            </div>
+        </div>
+
+    </main>
+
+    <!-- PIE DE PÁGINA ESCOLARIS -->
+    <footer class="text-center py-4 bg-slate-100 border-t border-slate-200">
+        <p class="text-[10px] text-slate-400 uppercase tracking-widest">
+            Módulo Explicativo de Ciencias Naturales • Escolaris • Educación para Trascender
+        </p>
+    </footer>
+
+    <!-- MODAL PERSONALIZADO (Evita el uso de alert) -->
+    <div id="custom-modal" class="fixed inset-0 bg-[#244b5a]/80 backdrop-blur-sm hidden items-center justify-center p-4 z-50">
+        <div class="bg-white rounded-3xl p-6 max-w-sm w-full shadow-2xl text-center border-4 border-[#f7be00] transform scale-95 transition-transform duration-300">
+            <span id="modal-emoji" class="text-5xl">🎓</span>
+            <h4 id="modal-title" class="text-lg font-bold text-[#244b5a] mt-3 uppercase tracking-wide">Título</h4>
+            <p id="modal-body" class="text-xs text-slate-600 mt-2 leading-relaxed">Descripción</p>
+            <button onclick="closeModal()" class="mt-4 bg-[#244b5a] hover:bg-[#1a3844] text-white font-bold px-6 py-2.5 rounded-xl text-xs uppercase tracking-wider shadow-sm transition-all active:scale-95">
+                Continuar
+            </button>
+        </div>
+    </div>
+
+    <script>
+        let detectiveName = "Valeria";
+        let currentSpread = 0; // 0 = Cerrado, 1 = Spread 1, 2 = Spread 2, 3 = Spread 3, 4 = Finalizado
+        const totalSpreads = 4;
+        let previousSpread = 0;
+
+        let objectChecklist = { rock: false, plant: false, drop: false };
+        let gameScore = 0;
+        let triviaPassed = false;
+
+        // Efectos de sonido auto-generados por osciladores de Web Audio API (evita archivos externos)
+        function playPaperFlipSound() {
+            const AudioContext = window.AudioContext || window.webkitAudioContext;
+            if (!AudioContext) return;
+            const ctx = new AudioContext();
+            
+            const bufferSize = ctx.sampleRate * 0.3; // Duración 0.3s
+            const buffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate);
+            const data = buffer.getChannelData(0);
+            for (let i = 0; i < bufferSize; i++) {
+                data[i] = Math.random() * 2 - 1;
+            }
+            
+            const noise = ctx.createBufferSource();
+            noise.buffer = buffer;
+            
+            const filter = ctx.createBiquadFilter();
+            filter.type = 'bandpass';
+            filter.frequency.value = 1000;
+            filter.Q.value = 1.0;
+            
+            const gainNode = ctx.createGain();
+            gainNode.gain.setValueAtTime(0, ctx.currentTime);
+            gainNode.gain.linearRampToValueAtTime(0.15, ctx.currentTime + 0.05);
+            gainNode.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.25);
+            
+            filter.frequency.setValueAtTime(1200, ctx.currentTime);
+            filter.frequency.exponentialRampToValueAtTime(500, ctx.currentTime + 0.25);
+            
+            noise.connect(filter);
+            filter.connect(gainNode);
+            gainNode.connect(ctx.destination);
+            
+            noise.start();
+            noise.stop(ctx.currentTime + 0.3);
+        }
+
+        function playNotebookOpenSound() {
+            const AudioContext = window.AudioContext || window.webkitAudioContext;
+            if (!AudioContext) return;
+            const ctx = new AudioContext();
+            
+            const bufferSize = ctx.sampleRate * 0.7; 
+            const buffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate);
+            const data = buffer.getChannelData(0);
+            for (let i = 0; i < bufferSize; i++) {
+                data[i] = Math.random() * 2 - 1;
+            }
+            
+            const noise = ctx.createBufferSource();
+            noise.buffer = buffer;
+            
+            const filter = ctx.createBiquadFilter();
+            filter.type = 'lowpass';
+            filter.frequency.value = 500;
+            
+            const gainNode = ctx.createGain();
+            gainNode.gain.setValueAtTime(0, ctx.currentTime);
+            gainNode.gain.linearRampToValueAtTime(0.2, ctx.currentTime + 0.1);
+            gainNode.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.65);
+            
+            noise.connect(filter);
+            filter.connect(gainNode);
+            gainNode.connect(ctx.destination);
+            
+            noise.start();
+            noise.stop(ctx.currentTime + 0.7);
+        }
+
+        // Sistema de apertura del cuaderno
+        function openNotebook() {
+            const nameInput = document.getElementById('detective-input-name').value.trim();
+            if (nameInput !== "" && nameInput.toLowerCase() !== "valeria") {
+                detectiveName = nameInput;
+            } else {
+                detectiveName = "Valeria";
+            }
+            document.getElementById('user-name-title').textContent = "El Cuaderno de " + detectiveName;
+            document.getElementById('trivia-student-name').textContent = detectiveName;
+
+            playNotebookOpenSound();
+            currentSpread = 1;
+            updateBookSpreadLayout();
+        }
+
+        // Actualizar visualizaciones y estados de la página
+        function updateBookSpreadLayout() {
+            const papers = [
+                document.getElementById('paper-0'),
+                document.getElementById('paper-1'),
+                document.getElementById('paper-2'),
+                document.getElementById('paper-3')
+            ];
+
+            // 1. Identificar si hay alguna página cambiando de estado (volteándose) para darle súper prioridad (Z-Index 50)
+            let flippingIndex = -1;
+            if (currentSpread !== previousSpread) {
+                flippingIndex = Math.min(currentSpread, previousSpread);
+            }
+
+            // 2. Aplicar la orientación física de las hojas de forma directa (Sin keyframes conflictivos)
+            papers.forEach((paper, index) => {
+                paper.classList.remove('flip-to-left', 'flip-to-right', 'flipping');
+
+                if (index === flippingIndex) {
+                    paper.classList.add('flipping');
+                    setTimeout(() => {
+                        paper.classList.remove('flipping');
+                    }, 800);
+                }
+
+                // Posicionar a la izquierda o derecha en función de la página visible
+                if (index < currentSpread) {
+                    paper.classList.add('flip-to-left');
+                } else {
+                    paper.classList.add('flip-to-right');
+                }
+            });
+
+            // 3. Sistema de apilamiento lógico 3D (Z-Index) libre de transparencias y colisiones
+            if (currentSpread === 0) {
+                papers[0].style.zIndex = "10";
+                papers[1].style.zIndex = "9";
+                papers[2].style.zIndex = "8";
+                papers[3].style.zIndex = "7";
+            }
+            else if (currentSpread === 1) {
+                papers[0].style.zIndex = "10"; // Cara izquierda visible (Laboratorio)
+                papers[1].style.zIndex = "9";  // Cara derecha visible (Lección 1)
+                papers[2].style.zIndex = "8";
+                papers[3].style.zIndex = "7";
+            }
+            else if (currentSpread === 2) {
+                papers[0].style.zIndex = "7";
+                papers[1].style.zIndex = "10"; // Cara izquierda visible (Lección 2)
+                papers[2].style.zIndex = "9";  // Cara derecha visible (Lección 3)
+                papers[3].style.zIndex = "8";
+            }
+            else if (currentSpread === 3) {
+                papers[0].style.zIndex = "6";
+                papers[1].style.zIndex = "7";
+                papers[2].style.zIndex = "10"; // Cara izquierda visible (Juego)
+                papers[3].style.zIndex = "9";  // Cara derecha visible (Trivia)
+            }
+            else if (currentSpread === 4) {
+                papers[0].style.zIndex = "5";
+                papers[1].style.zIndex = "6";
+                papers[2].style.zIndex = "7";
+                papers[3].style.zIndex = "10"; // Cara izquierda visible (Contraportada)
+            }
+
+            // Elevar la página que se está volteando para que vuele de forma impecable
+            if (flippingIndex !== -1) {
+                papers[flippingIndex].style.zIndex = "50";
+            }
+
+            // Ejecutar el escalado y centrado automático adaptable
+            autoScaleBook();
+
+            // Actualizar el estilo activo de los separadores/pestañas laterales
+            for (let i = 0; i < 3; i++) {
+                const tab = document.getElementById(`tab-${i}`);
+                if (tab) {
+                    if (currentSpread === 0) {
+                        tab.classList.add('opacity-30', 'pointer-events-none');
+                    } else {
+                        tab.classList.remove('opacity-30', 'pointer-events-none');
+                        if (i + 1 === currentSpread) {
+                            tab.classList.remove('bg-slate-200', 'text-[#244b5a]');
+                            tab.classList.add('bg-[#f7be00]', 'text-[#244b5a]', 'font-bold');
+                        } else {
+                            tab.classList.remove('bg-[#f7be00]', 'text-[#244b5a]', 'font-bold');
+                            tab.classList.add('bg-slate-200', 'text-[#244b5a]');
+                        }
+                    }
+                }
+            }
+
+            previousSpread = currentSpread;
+        }
+
+        function nextSpread() {
+            if (currentSpread < totalSpreads) {
+                playPaperFlipSound();
+                currentSpread++;
+                updateBookSpreadLayout();
+            }
+        }
+
+        function prevSpread() {
+            if (currentSpread > 0) {
+                playPaperFlipSound();
+                currentSpread--;
+                updateBookSpreadLayout();
+            }
+        }
+
+        function goToSpread(spreadIndex) {
+            if (currentSpread > 0 && spreadIndex !== currentSpread) {
+                playPaperFlipSound();
+                currentSpread = spreadIndex;
+                updateBookSpreadLayout();
+            }
+        }
+
+        // Información interactiva de muestras de Valeria
+        const objectData = {
+            rock: {
+                title: "🪨 Roca Antigua (Estromatolito)",
+                description: "Muestra capas formadas por bacterias primitivas hace 3,500 millones de años. ¡Es una evidencia física real de que la vida empezó bajo el agua de mares ancestrales!"
+            },
+            plant: {
+                title: "🌱 Planta de Helecho Vivo",
+                description: "Un organismo multicelular formado por millones de células. Puedes anotar datos cualitativos (hojas verdes y suaves) o cuantitativos (mide exactamente 24 cm de alto)."
+            },
+            drop: {
+                title: "💧 Muestra de Agua Estancada",
+                description: "Observada bajo la lupa, revela microorganismos unicelulares moviéndose. Son descendientes directos de los primeros seres vivos que poblaron y cambiaron la Tierra."
+            }
+        };
+
+        function showObjectInfo(key) {
+            const data = objectData[key];
+            const panel = document.getElementById('object-display-panel');
+            if (data && panel) {
+                panel.innerHTML = `
+                    <div class="text-left animate-fadeIn">
+                        <h4 class="font-extrabold text-[#244b5a] text-xs mb-1 uppercase tracking-wide">${data.title}</h4>
+                        <p class="text-slate-600 leading-relaxed text-xs">${data.description}</p>
+                    </div>
+                `;
+                panel.classList.add('border-[#f7be00]');
+                setTimeout(() => { panel.classList.remove('border-[#f7be00]'); }, 300);
+
+                objectChecklist[key] = true;
+                updateProgressChecklist();
+                playPaperFlipSound();
+            }
+        }
+
+        // Checklist de progreso
+        function updateProgressChecklist() {
+            if (objectChecklist.rock && objectChecklist.plant && objectChecklist.drop) {
+                const check = document.getElementById('prog-obs');
+                if (check) {
+                    check.textContent = "✅";
+                    check.classList.remove('text-slate-300');
+                    check.classList.add('text-emerald-500');
+                }
+            }
+        }
+
+        // Lógica del clasificador cualitativo vs cuantitativo
+        const gameItems = [
+            { text: "La planta de helecho mide exactamente 18 centímetros.", type: "cuantitativo", emoji: "🌱" },
+            { text: "La roca de estromatolito tiene una superficie rugosa y áspera.", type: "cualitativo", emoji: "🪨" },
+            { text: "La gota de agua contiene 12 microorganismos vivos.", type: "cuantitativo", emoji: "💧" },
+            { text: "La muestra líquida del mar primitivo despide un olor húmedo.", type: "cualitativo", emoji: "🧪" },
+            { text: "La piedra de estromatolito pesa 450 gramos.", type: "cuantitativo", emoji: "⚖️" },
+            { text: "Los microorganismos en la gota son de color verde translúcido.", type: "cualitativo", emoji: "🦠" }
+        ];
+        let currentGameIndex = 0;
+
+        function updateGameCard() {
+            const currentItem = gameItems[currentGameIndex];
+            const emojiEl = document.getElementById('game-item-emoji');
+            const textEl = document.getElementById('game-item-text');
+            const cardEl = document.getElementById('game-card');
+
+            if (!emojiEl || !textEl || !cardEl) return;
+
+            if (currentItem) {
+                emojiEl.textContent = currentItem.emoji;
+                textEl.textContent = `"${currentItem.text}"`;
+                cardEl.className = "bg-white p-6 rounded-2xl shadow-sm border-2 border-slate-100 text-center transition-all duration-300 transform scale-100 opacity-100";
+            } else {
+                emojiEl.textContent = "🏆";
+                textEl.textContent = "¡Sobresaliente! Has clasificado todas las observaciones correctamente.";
+                cardEl.className = "bg-emerald-50 p-6 rounded-2xl shadow-sm border-2 border-emerald-400 text-center transition-all scale-100";
+                
+                const check = document.getElementById('prog-game');
+                if (check) {
+                    check.textContent = "✅";
+                    check.classList.remove('text-slate-300');
+                    check.classList.add('text-emerald-500');
+                }
+            }
+        }
+
+        function checkGameAnswer(userAnswer) {
+            const currentItem = gameItems[currentGameIndex];
+            const feedbackEl = document.getElementById('game-feedback');
+            if (!currentItem || !feedbackEl) return;
+
+            if (userAnswer === currentItem.type) {
+                gameScore++;
+                const scoreEl = document.getElementById('game-score');
+                if (scoreEl) scoreEl.textContent = gameScore;
+                
+                feedbackEl.textContent = "¡Correcto! Nota científica registrada. ✔️";
+                feedbackEl.className = "mt-2 text-center text-xs font-bold text-emerald-600 animate-pulse";
+            } else {
+                feedbackEl.textContent = "Inexacto. Cualitativo describe cualidades 🎨; Cuantitativo usa mediciones exactas 🔢.";
+                feedbackEl.className = "mt-2 text-center text-xs font-bold text-[#993921]";
+            }
+
+            setTimeout(() => {
+                currentGameIndex++;
+                feedbackEl.textContent = "";
+                updateGameCard();
+            }, 3000);
+        }
+
+        // Validación y retroalimentación de la evaluación
+        function validateTrivia() {
+            const q1 = document.querySelector('input[name="q1"]:checked');
+            const q2 = document.querySelector('input[name="q2"]:checked');
+            const q3 = document.querySelector('input[name="q3"]:checked');
+
+            if (!q1 || !q2 || !q3) {
+                showModal("🤔 Evaluación Incompleta", "Por favor contesta todas las interrogantes científicas para certificar tus conocimientos.", "🗂️");
+                return;
+            }
+
+            const cardQ1 = document.getElementById('card-q1');
+            const cardQ2 = document.getElementById('card-q2');
+            const cardQ3 = document.getElementById('card-q3');
+
+            const fQ1 = document.getElementById('feedback-q1');
+            const fQ2 = document.getElementById('feedback-q2');
+            const fQ3 = document.getElementById('feedback-q3');
+
+            let allCorrect = true;
+
+            // Q1
+            fQ1.classList.remove('hidden');
+            if (q1.value === "correcta") {
+                cardQ1.className = "bg-emerald-50 p-3 rounded-xl border-2 border-emerald-500 transition-all";
+                fQ1.className = "mt-2 p-2 text-[10px] rounded-lg bg-emerald-100 text-emerald-800 font-medium";
+                fQ1.innerHTML = "<strong>¡Excelente!</strong> Las explicaciones culturales son leyendas y mitos tradicionales que los pueblos crean para dar sentido a la existencia.";
+            } else {
+                allCorrect = false;
+                cardQ1.className = "bg-rose-50 p-3 rounded-xl border-2 border-rose-400 transition-all";
+                fQ1.className = "mt-2 p-2 text-[10px] rounded-lg bg-rose-100 text-[#993921] font-medium";
+                fQ1.innerHTML = "<strong>Inexacto.</strong> Es una <em>explicación cultural</em>. Las teorías científicas se construyen obligatoriamente sobre evidencias físicas medibles y replicables.";
+            }
+
+            // Q2
+            fQ2.classList.remove('hidden');
+            if (q2.value === "correcta") {
+                cardQ2.className = "bg-emerald-50 p-3 rounded-xl border-2 border-emerald-500 transition-all";
+                fQ2.className = "mt-2 p-2 text-[10px] rounded-lg bg-emerald-100 text-emerald-800 font-medium";
+                fQ2.innerHTML = "<strong>¡Correcto!</strong> Es cuantitativa porque utiliza un valor numérico exacto ('5' microorganismos) para describir la muestra.";
+            } else {
+                allCorrect = false;
+                cardQ2.className = "bg-rose-50 p-3 rounded-xl border-2 border-rose-400 transition-all";
+                fQ2.className = "mt-2 p-2 text-[10px] rounded-lg bg-rose-100 text-[#993921] font-medium";
+                fQ2.innerHTML = "<strong>Inexacto.</strong> Como utiliza un número o dato contable exacto, se trata de una observación <em>cuantitativa</em>.";
+            }
+
+            // Q3
+            fQ3.classList.remove('hidden');
+            if (q3.value === "correcta") {
+                cardQ3.className = "bg-emerald-50 p-3 rounded-xl border-2 border-emerald-500 transition-all";
+                fQ3.className = "mt-2 p-2 text-[10px] rounded-lg bg-emerald-100 text-emerald-800 font-medium";
+                fQ3.innerHTML = "<strong>¡Correcto!</strong> Las primeras evidencias de vida son estromatolitos fosilizados y microorganismos unicelulares primitivos.";
+            } else {
+                allCorrect = false;
+                cardQ3.className = "bg-rose-50 p-3 rounded-xl border-2 border-rose-400 transition-all";
+                fQ3.className = "mt-2 p-2 text-[10px] rounded-lg bg-rose-100 text-[#993921] font-medium";
+                fQ3.innerHTML = "<strong>Inexacto.</strong> Los primeros pobladores fueron pequeños microbios invisibles que poblaron los océanos mucho antes de las plantas terrestres.";
+            }
+
+            if (allCorrect) {
+                triviaPassed = true;
+                showModal("¡Conocimiento Comprobado!", `Felicidades, ${detectiveName}. Has respondido con total precisión. Escolaris certifica tu sabiduría y te otorga tu medalla.`, "🥇");
+                
+                const badge = document.getElementById('trivia-badge-display');
+                if (badge) {
+                    badge.classList.remove('hidden');
+                    badge.classList.add('flex');
+                }
+            } else {
+                showModal("🔍 Revisa tus Respuestas", "Lee la retroalimentación en cada tarjeta de la trivia para aprender y corregir.", "🧐");
+            }
+        }
+
+        // AUTO-ESCALADO INTEGRAL DEL VISOR (Resistente a iframes estrechos o Canvas)
+        function autoScaleBook() {
+            const container = document.getElementById('book-container');
+            if (!container) return;
+            
+            // Medición 100% real del iframe de Canvas
+            const viewport = document.querySelector('.book-viewport');
+            const viewportWidth = viewport ? viewport.offsetWidth : window.innerWidth;
+            const viewportHeight = viewport ? viewport.offsetHeight : 680;
+            
+            // 1. Calcular el factor de escala proporcional basado en el ancho real
+            let scale = 1;
+            if (viewportWidth < 1056) {
+                scale = (viewportWidth - 32) / 1024;
+                scale = Math.max(0.35, scale); // Previene la pérdida de legibilidad en pantallas ultra-pequeñas
+            }
+            
+            // 2. Calcular la traslación X exacta en píxeles (tx) para centrar la sección visible de la libreta
+            let tx = 0;
+            if (currentSpread === 0) {
+                // Estado Cerrado: centrar la portada derecha (cuyo centro en píxeles es 768px)
+                tx = (viewportWidth / 2) - (768 * scale);
+            } else {
+                // Estado Abierto: centrar todo el pliego de 1024px (cuyo centro es 512px)
+                tx = (viewportWidth / 2) - (512 * scale);
+            }
+            
+            // 3. Calcular la traslación Y (ty) para centrar verticalmente sin colisiones
+            let ty = (viewportHeight - (650 * scale)) / 2;
+            ty = Math.max(10, ty); // Conserva un margen superior mínimo de seguridad
+            
+            // 4. Aplicar transformaciones absolutas tridimensionales sin filtros de aplanamiento
+            container.style.transformOrigin = "left top";
+            container.style.transform = `translate(${tx}px, ${ty}px) scale(${scale})`;
+        }
+
+        window.addEventListener('resize', autoScaleBook);
+        window.addEventListener('load', () => {
+            autoScaleBook();
+            updateGameCard();
+            updateBookSpreadLayout();
+        });
+
+        // Modales interactivos
+        function showModal(title, text, emoji = "🎓") {
+            const modal = document.getElementById('custom-modal');
+            document.getElementById('modal-emoji').textContent = emoji;
+            document.getElementById('modal-title').textContent = title;
+            document.getElementById('modal-body').textContent = text;
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+        }
+
+        function closeModal() {
+            const modal = document.getElementById('custom-modal');
+            modal.classList.add('hidden');
+            modal.classList.remove('flex');
+        }
+    </script>
+
+</body>
+</html>
